@@ -3,6 +3,7 @@ package de.ait.training.controller;
 import de.ait.training.model.Car;
 import de.ait.training.repository.CarRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -28,32 +29,32 @@ import java.util.stream.Collectors;
 public class RestApiCarController {
 
     CarRepository carRepository;
-/**
-    Car carOne = new Car(1, "black", "BMW x5", 25000);
-    Car carTwo = new Car(2, "green", "Audi A4", 15000);
-    Car carThree = new Car(3, "white", "MB A220", 18000);
-    Car carFour = new Car(4, "red", "Ferrari", 250000);
-
-    List<Car> cars = new ArrayList<>();
-
-    public RestApiCarController() {
-        cars.add(carOne);
-        cars.add(carTwo);
-        cars.add(carThree);
-        cars.add(carFour);
-    }
 
     /**
+     * Car carOne = new Car(1, "black", "BMW x5", 25000);
+     * Car carTwo = new Car(2, "green", "Audi A4", 15000);
+     * Car carThree = new Car(3, "white", "MB A220", 18000);
+     * Car carFour = new Car(4, "red", "Ferrari", 250000);
+     * <p>
+     * List<Car> cars = new ArrayList<>();
+     * <p>
+     * public RestApiCarController() {
+     * cars.add(carOne);
+     * cars.add(carTwo);
+     * cars.add(carThree);
+     * cars.add(carFour);
+     * }
+     * <p>
+     * /**
      * GET /api/cars
      *
      * @return возвращает список всех автомобилей
      */
 
 
-
-RestApiCarController(CarRepository carRepository) {
-    this.carRepository = carRepository;
-}
+    RestApiCarController(CarRepository carRepository) {
+        this.carRepository = carRepository;
+    }
 
     @Operation(
             summary = "Show cars",
@@ -114,13 +115,12 @@ RestApiCarController(CarRepository carRepository) {
     ResponseEntity<Car> putCar(@PathVariable long id, @RequestBody Car car) {
 
         Car foundCar = carRepository.findById(id).orElse(null);
-            if(foundCar == null) {
-                log.info("Car with id {} not found", id);
-            }
-            else{
-                log.info("Car with id {} found and changed", id);
-                carRepository.save(car);
-            }
+        if (foundCar == null) {
+            log.info("Car with id {} not found", id);
+        } else {
+            log.info("Car with id {} found and changed", id);
+            carRepository.save(car);
+        }
 
         return (foundCar == null)
                 ? new ResponseEntity<>(postCar(car), HttpStatus.CREATED)
@@ -163,7 +163,7 @@ RestApiCarController(CarRepository carRepository) {
     )
 
     @GetMapping("/color/{color}")
-    ResponseEntity<List<Car>> getCarsByColor(@PathVariable String color) {
+    public ResponseEntity<List<Car>> getCarsByColor(@PathVariable String color) {
         List<Car> listCarsByColor = carRepository.findCarByColorIgnoreCase(color);
 
         if (listCarsByColor.isEmpty()) {
@@ -176,6 +176,79 @@ RestApiCarController(CarRepository carRepository) {
 
     }
 
+    @Operation(
+            summary = "Show list of cars by  between prices",
+            description = "Returns a list of cars filtered by  between prices",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "cars found between prices "),
+                    @ApiResponse(responseCode = "404", description = "cars not found between prices ")
+            }
+    )
+
+    @GetMapping("/price/between/{min}/{max}")
+    public ResponseEntity<List<Car>> getCarsByPriceBetween(
+            @Parameter(description = "min price", example = "10000")
+            @PathVariable Integer min,
+
+            @Parameter(description = "max price", example = "30000")
+            @PathVariable Integer max) {
+        List<Car> listCarsByPriceBetween = carRepository.findByPriceBetween(min, max);
+        if (listCarsByPriceBetween.isEmpty() || max < min) {
+            log.warn("No cars found with price between {} and {}", min, max);
+        }
+        return (!listCarsByPriceBetween.isEmpty())
+                ? new ResponseEntity<>(listCarsByPriceBetween, HttpStatus.OK)
+                : new ResponseEntity<>(listCarsByPriceBetween, HttpStatus.NOT_FOUND);
+    }
+
+
+    @Operation(
+            summary = "Show list of cars by  under  or equals max price",
+            description = "Returns a list of cars filtered by  under or equels max price",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "cars found under or equels max price "),
+                    @ApiResponse(responseCode = "404", description = "cars not found under or equels max price ")
+            }
+    )
+
+
+    @GetMapping("/price/under/{max}")
+    public ResponseEntity<List<Car>> getCarsByPriceLessThanMaxPrice(
+            @Parameter(description = "max price", example = "30000")
+            @PathVariable Integer max) {
+        List<Car> listCarsByPriceUnderMaxOrEquels = carRepository.findByPriceLessThanEqual(max);
+        if (listCarsByPriceUnderMaxOrEquels.isEmpty()) {
+            log.warn("No cars found with price under or equels {}", max);
+        }
+        return (!listCarsByPriceUnderMaxOrEquels.isEmpty())
+                ? new ResponseEntity<>(listCarsByPriceUnderMaxOrEquels, HttpStatus.OK)
+                : new ResponseEntity<>(listCarsByPriceUnderMaxOrEquels, HttpStatus.NOT_FOUND);
+    }
+
+
+
+
+
+    @Operation(
+            summary = "Show list of cars by  over  or equals min price",
+            description = "Returns a list of cars filtered by  over or equels min price",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "cars found over or equels min price "),
+                    @ApiResponse(responseCode = "404", description = "cars not found over or equels min price ")
+            }
+    )
+    @GetMapping("/price/over/{min}")
+    public ResponseEntity<List<Car>> getCarsByPriceGreaterThanMinPrice(
+            @Parameter(description = "min price", example = "5000")
+            @PathVariable Integer min) {
+        List<Car> listCarsByPriceGreaterMinOrEquels = carRepository.findByPriceGreaterThanEqual(min);
+        if (listCarsByPriceGreaterMinOrEquels.isEmpty()) {
+            log.warn("No cars found with price over or equels {}", min);
+        }
+        return (!listCarsByPriceGreaterMinOrEquels.isEmpty())
+                ? new ResponseEntity<>(listCarsByPriceGreaterMinOrEquels, HttpStatus.OK)
+                : new ResponseEntity<>(listCarsByPriceGreaterMinOrEquels, HttpStatus.NOT_FOUND);
+    }
 }
 
 
