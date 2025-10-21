@@ -1,6 +1,7 @@
 package de.ait.training.controller;
 
 import de.ait.training.model.Car;
+import de.ait.training.repository.CarRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +27,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/cars")
 public class RestApiCarController {
 
+    CarRepository carRepository;
+/**
     Car carOne = new Car(1, "black", "BMW x5", 25000);
     Car carTwo = new Car(2, "green", "Audi A4", 15000);
     Car carThree = new Car(3, "white", "MB A220", 18000);
@@ -46,6 +49,12 @@ public class RestApiCarController {
      * @return возвращает список всех автомобилей
      */
 
+
+
+RestApiCarController(CarRepository carRepository) {
+    this.carRepository = carRepository;
+}
+
     @Operation(
             summary = "Show cars",
             description = "Show list of the cars "
@@ -53,7 +62,7 @@ public class RestApiCarController {
     )
     @GetMapping
     Iterable<Car> getCars() {
-        return cars;
+        return carRepository.findAll();
     }
 
     /**
@@ -77,10 +86,10 @@ public class RestApiCarController {
     Car postCar(@RequestBody Car car) {
         if (car.getId() < 0) {
             log.error("Car id must be greater than zero");
-            Car errorCar = new Car(9999, "000", "000", 9999);
+            Car errorCar = new Car("000", "000", 9999);
             return errorCar;
         }
-        cars.add(car);
+        carRepository.save(car);
         return car;
     }
 
@@ -103,16 +112,17 @@ public class RestApiCarController {
     )
     @PutMapping("/{id}")
     ResponseEntity<Car> putCar(@PathVariable long id, @RequestBody Car car) {
-        int carIndex = -1;
-        for (Car carInList : cars) {
-            if (carInList.getId() == id) {
-                carIndex = cars.indexOf(carInList);
-                cars.set(carIndex, car);
-                log.info("Car id " + carInList.getId() + " has been updated");
-            }
-        }
 
-        return (carIndex == -1)
+        Car foundCar = carRepository.findById(id).orElse(null);
+            if(foundCar == null) {
+                log.info("Car with id {} not found", id);
+            }
+            else{
+                log.info("Car with id {} found and changed", id);
+                carRepository.save(car);
+            }
+
+        return (foundCar == null)
                 ? new ResponseEntity<>(postCar(car), HttpStatus.CREATED)
                 : new ResponseEntity<>(car, HttpStatus.OK);
     }
@@ -134,7 +144,7 @@ public class RestApiCarController {
     @DeleteMapping("/{id}")
     void deleteCar(@PathVariable long id) {
         log.info("Delete car with id {}", id);
-        cars.removeIf(car -> car.getId() == id);
+        carRepository.deleteById(id);
     }
 
     /**
@@ -146,17 +156,16 @@ public class RestApiCarController {
             summary = "Show list of cars by color",
             description = "Returns a list of cars filtered by color",
             responses = {
-        @ApiResponse(responseCode = "200", description = "cars found ")
+                    @ApiResponse(responseCode = "200", description = "cars found "),
+                    @ApiResponse(responseCode = "404", description = "cars not found ")
 
-    }
+            }
     )
 
-
     @GetMapping("/color/{color}")
-    ResponseEntity<List<Car>> getCarsByColor(@PathVariable String color){
-        List<Car> listCarsByColor = cars.stream().
-                filter(car -> car.getColor().equalsIgnoreCase(color))
-                .collect(Collectors.toList());
+    ResponseEntity<List<Car>> getCarsByColor(@PathVariable String color) {
+        List<Car> listCarsByColor = carRepository.findCarByColorIgnoreCase(color);
+
         if (listCarsByColor.isEmpty()) {
             log.warn("No cars found with color {}", color);
         }
@@ -165,7 +174,7 @@ public class RestApiCarController {
                 ? new ResponseEntity<>(listCarsByColor, HttpStatus.OK)
                 : new ResponseEntity<>(listCarsByColor, HttpStatus.NOT_FOUND);
 
-}
+    }
 
 }
 
