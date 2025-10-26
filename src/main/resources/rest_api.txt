@@ -9,3 +9,11 @@ DELETE удаление обьекта (по идентификатору) ид�
 400 Bad Request ошибка в данных
 404 Not found Обьект не найден
 500 Internal Server Error ошибка сервера
+
+
+INSERT INTO cars (color, model, price)
+VALUES
+    ('black', 'BMW x5', 25000),
+    ('green', 'Audi A4', 15000),
+    ('white', 'MB A220', 18000),
+    ('red', 'Ferrari', 250000);
