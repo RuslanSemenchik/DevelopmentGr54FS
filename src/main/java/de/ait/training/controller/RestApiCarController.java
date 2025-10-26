@@ -167,7 +167,7 @@ public class RestApiCarController {
         List<Car> listCarsByColor = carRepository.findCarByColorIgnoreCase(color);
 
         if (listCarsByColor.isEmpty()) {
-            log.warn("No cars found with color {}", color);
+            log.info("No cars found with color {}", color);
         }
 
         return (!listCarsByColor.isEmpty())
@@ -187,18 +187,25 @@ public class RestApiCarController {
 
     @GetMapping("/price/between/{min}/{max}")
     public ResponseEntity<List<Car>> getCarsByPriceBetween(
-            @Parameter(description = "min price", example = "10000")
-            @PathVariable Integer min,
+            @Parameter(description = "min price", example = "10000.0")
+            @PathVariable Double min,
 
-            @Parameter(description = "max price", example = "30000")
-            @PathVariable Integer max) {
-        List<Car> listCarsByPriceBetween = carRepository.findByPriceBetween(min, max);
-        if (listCarsByPriceBetween.isEmpty() || max < min) {
-            log.warn("No cars found with price between {} and {}", min, max);
+            @Parameter(description = "max price", example = "30000.0")
+            @PathVariable Double max) {
+
+        if(max < min) {
+            log.error("Max price must be greater than min");
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
         }
-        return (!listCarsByPriceBetween.isEmpty())
-                ? new ResponseEntity<>(listCarsByPriceBetween, HttpStatus.OK)
-                : new ResponseEntity<>(listCarsByPriceBetween, HttpStatus.NOT_FOUND);
+
+        List<Car> listCarsByPriceBetween = carRepository.findByPriceBetween(min, max);
+        if (listCarsByPriceBetween.isEmpty() ) {
+            log.info("No cars found with price between {} and {}", min, max);
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+        log.info("Found {} cars with price between {} and {}", listCarsByPriceBetween.size(), min, max);
+        return new ResponseEntity<>(listCarsByPriceBetween, HttpStatus.OK);
+
     }
 
 
@@ -214,15 +221,16 @@ public class RestApiCarController {
 
     @GetMapping("/price/under/{max}")
     public ResponseEntity<List<Car>> getCarsByPriceLessThanMaxPrice(
-            @Parameter(description = "max price", example = "30000")
-            @PathVariable Integer max) {
+            @Parameter(description = "max price", example = "30000.0")
+            @PathVariable Double max) {
         List<Car> listCarsByPriceUnderMaxOrEquels = carRepository.findByPriceLessThanEqual(max);
         if (listCarsByPriceUnderMaxOrEquels.isEmpty()) {
-            log.warn("No cars found with price under or equels {}", max);
+            log.info("No cars found with price under or equels {}", max);
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         }
-        return (!listCarsByPriceUnderMaxOrEquels.isEmpty())
-                ? new ResponseEntity<>(listCarsByPriceUnderMaxOrEquels, HttpStatus.OK)
-                : new ResponseEntity<>(listCarsByPriceUnderMaxOrEquels, HttpStatus.NOT_FOUND);
+        log.info("Found {} cars with price less than {}", listCarsByPriceUnderMaxOrEquels.size(), max);
+        return new ResponseEntity<>(listCarsByPriceUnderMaxOrEquels, HttpStatus.OK);
+
     }
 
 
@@ -240,15 +248,17 @@ public class RestApiCarController {
     @GetMapping("/price/over/{min}")
     public ResponseEntity<List<Car>> getCarsByPriceGreaterThanMinPrice(
             @Parameter(description = "min price", example = "5000")
-            @PathVariable Integer min) {
+            @PathVariable Double min) {
         List<Car> listCarsByPriceGreaterMinOrEquels = carRepository.findByPriceGreaterThanEqual(min);
         if (listCarsByPriceGreaterMinOrEquels.isEmpty()) {
             log.warn("No cars found with price over or equels {}", min);
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         }
-        return (!listCarsByPriceGreaterMinOrEquels.isEmpty())
-                ? new ResponseEntity<>(listCarsByPriceGreaterMinOrEquels, HttpStatus.OK)
-                : new ResponseEntity<>(listCarsByPriceGreaterMinOrEquels, HttpStatus.NOT_FOUND);
-    }
+        log.info("Found {} cars with price greater than {}", listCarsByPriceGreaterMinOrEquels.size(), min);
+        return new ResponseEntity<>(listCarsByPriceGreaterMinOrEquels, HttpStatus.OK);
+
+
+}
 }
 
 
