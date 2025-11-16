@@ -4,3 +4,4 @@ VALUES
     ('green', 'Audi A4', 15000),
     ('white', 'MB A220', 18000),
     ('red', 'Ferrari', 250000);
+

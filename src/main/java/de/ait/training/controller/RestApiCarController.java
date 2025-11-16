@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -82,14 +83,14 @@ public class RestApiCarController {
 
     )
 
-
+@ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     Car postCar(@RequestBody Car car) {
-        if (car.getId() < 0) {
-            log.error("Car id must be greater than zero");
-            Car errorCar = new Car("000", "000", 9999);
-            return errorCar;
-        }
+     //   if (car.getId() < 0) {
+      //      log.error("Car id must be greater than zero");
+       //     Car errorCar = new Car("000", "000", 9999);
+       //     return errorCar;
+       // }
         carRepository.save(car);
         return car;
     }
@@ -112,19 +113,18 @@ public class RestApiCarController {
 
     )
     @PutMapping("/{id}")
-    ResponseEntity<Car> putCar(@PathVariable long id, @RequestBody Car car) {
+    ResponseEntity<Car> putCar(@PathVariable Long id, @RequestBody Car car) {
 
         Car foundCar = carRepository.findById(id).orElse(null);
         if (foundCar == null) {
             log.info("Car with id {} not found", id);
+            return new ResponseEntity<>(postCar(car), HttpStatus.CREATED);
         } else {
             log.info("Car with id {} found and changed", id);
             carRepository.save(car);
+           return new ResponseEntity<>(car, HttpStatus.OK);
         }
 
-        return (foundCar == null)
-                ? new ResponseEntity<>(postCar(car), HttpStatus.CREATED)
-                : new ResponseEntity<>(car, HttpStatus.OK);
     }
 
     /**
@@ -142,7 +142,7 @@ public class RestApiCarController {
     )
 
     @DeleteMapping("/{id}")
-    void deleteCar(@PathVariable long id) {
+    void deleteCar(@PathVariable Long id) {
         log.info("Delete car with id {}", id);
         carRepository.deleteById(id);
     }
