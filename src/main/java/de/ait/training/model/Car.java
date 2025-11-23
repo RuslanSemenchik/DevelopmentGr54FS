@@ -27,8 +27,11 @@ public class Car {
     @Column(nullable = false)
     private double price;
 
-    @Column(nullable = false)
-   private int year;
+    @Column(name = "year")
+    private int year;
+
+    @Column(name = "engine_type")
+    private String engineType;
 
     public Car(String color, String model, double price) {
         this.color = color;
