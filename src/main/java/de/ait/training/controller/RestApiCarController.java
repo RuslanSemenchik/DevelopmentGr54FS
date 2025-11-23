@@ -259,6 +259,19 @@ public class RestApiCarController {
 
 
 }
+
+public void attachImage(){
+
+}
+
+
+
+
+
+
+
+
+
 }
 
 
